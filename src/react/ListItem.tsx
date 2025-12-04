@@ -20,6 +20,7 @@ interface ListItemProps {
   _as: "div" | CustomItemComponent;
   _isHorizontal: boolean;
   _isSSR: boolean | undefined;
+  _placeholder?: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export const ListItem = memo(
     _as: Element,
     _isHorizontal: isHorizontal,
     _isSSR: isSSR,
+    _placeholder: placeholder,
   }: ListItemProps): ReactElement => {
     const ref = useRef<HTMLDivElement>(null);
 
@@ -64,7 +66,7 @@ export const ListItem = memo(
       );
     } else {
       return (
-        <Element ref={ref} style={style} index={index}>
+        <Element ref={ref} style={style} index={index} placeholder={placeholder ?? false}>
           {children}
         </Element>
       );

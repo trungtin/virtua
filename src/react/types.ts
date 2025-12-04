@@ -24,6 +24,7 @@ export type CustomContainerComponent =
 export interface CustomItemComponentProps {
   style: CSSProperties;
   index: number;
+  placeholder: boolean;
   children: ReactNode;
   /**
    * only available after React 19

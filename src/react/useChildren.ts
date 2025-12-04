@@ -5,12 +5,17 @@ import { type ItemElement, flattenChildren } from "./utils.js";
  * @internal
  */
 export const useChildren = <T>(
-  children: ReactNode | ((data: T, i: number) => ReactElement),
+  children:
+    | ReactNode
+    | ((data: T, i: number, placeholder?: boolean) => ReactElement),
   data: ArrayLike<T> | undefined
 ) => {
-  return useMemo((): [(i: number) => ItemElement, number] => {
+  return useMemo((): [(i: number, placeholder?: boolean) => ItemElement, number] => {
     if (typeof children === "function") {
-      return [(i) => children(data![i]!, i), data!.length];
+      return [
+        (i, placeholder = false) => children(data![i]!, i, placeholder),
+        data!.length,
+      ];
     }
     // Memoize element array
     const _elements = flattenChildren(children);

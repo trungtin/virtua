@@ -79,7 +79,9 @@ export interface WindowVirtualizerProps<T = unknown> {
    *
    * You can also pass a function and set {@link WindowVirtualizerProps.data} to create elements lazily.
    */
-  children: ReactNode | ((data: T, index: number) => ReactElement);
+  children:
+    | ReactNode
+    | ((data: T, index: number, placeholder?: boolean) => ReactElement);
   /**
    * The data items rendered by this component. If you set a function to {@link WindowVirtualizerProps.children}, you have to set this prop.
    */
@@ -125,6 +127,12 @@ export interface WindowVirtualizerProps<T = unknown> {
    */
   item?: keyof JSX.IntrinsicElements | CustomItemComponent;
   /**
+   * If true, {@link WindowVirtualizerProps.children} will be called for all items including those outside of the viewport + bufferSize, with the placeholder flag set to true.
+   * This is useful to implement native search functionality because we allow the caller to render a placeholder with text-only version of the item.
+   * @defaultValue false
+   */
+  renderPlaceholder?: boolean;
+  /**
    * Callback invoked whenever scroll offset changes.
    */
   onScroll?: () => void;
@@ -153,6 +161,7 @@ export const WindowVirtualizer = forwardRef<
       ssrCount,
       as: Element = "div",
       item: ItemElement = "div",
+      renderPlaceholder = false,
       onScroll: onScrollProp,
       onScrollEnd: onScrollEndProp,
     },
@@ -204,6 +213,10 @@ export const WindowVirtualizer = forwardRef<
     const pushKey = !isHorizontal && isNegative ? "unshift" : "push";
 
     const items: ReactElement[] = [];
+    const [rangeStart, rangeEnd] = store.$getRange(bufferSize);
+    const shouldRenderAll = renderPlaceholder && !isSSR[refKey];
+    const renderStart = shouldRenderAll ? 0 : rangeStart;
+    const renderEnd = shouldRenderAll ? count - 1 : rangeEnd;
 
     useIsomorphicLayoutEffect(() => {
       isSSR[refKey] = false;
@@ -260,8 +273,12 @@ export const WindowVirtualizer = forwardRef<
       []
     );
 
-    for (let [i, j] = store.$getRange(bufferSize); i <= j; i++) {
-      const e = renderElement(i);
+    for (let i = renderStart; i <= renderEnd; i++) {
+      const placeholder = shouldRenderAll && (i < rangeStart || i > rangeEnd);
+      const e = renderElement(
+        i,
+        placeholder
+      );
       items[pushKey](
         <ListItem
           key={getKey(e, i)}
@@ -273,6 +290,7 @@ export const WindowVirtualizer = forwardRef<
           _children={e}
           _isHorizontal={isHorizontal}
           _isSSR={isSSR[refKey]}
+          _placeholder={placeholder}
         />
       );
     }
